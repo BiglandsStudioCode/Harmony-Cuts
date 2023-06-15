@@ -149,10 +149,22 @@ class SettingsWindow(QDialog):
 
         layout.addLayout(form_layout)
 
+        self.set_theme_button_text()
+
     def toggle_theme(self):
-        self.theme_button.setEnabled(False)
-        self.theme_button.setText("Switching theme...")
-        self.accept()
+        reply = QMessageBox.question(self, "Confirm Theme Change",
+                                     "Are you sure you want to switch to the {} theme?".format("light" if self.dark_theme else "dark"),
+                                     QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.dark_theme = not self.dark_theme
+            self.set_theme_button_text()
+            self.accept()
+
+    def set_theme_button_text(self):
+        if self.dark_theme:
+            self.theme_button.setText("Turn on Light Theme")
+        else:
+            self.theme_button.setText("Turn on Dark Theme")
 
 
 if __name__ == "__main__":
