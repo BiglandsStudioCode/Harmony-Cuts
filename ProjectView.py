@@ -102,9 +102,13 @@ class ProjectView(QMainWindow):
             self.setStyleSheet("background-color: #ffffff; color: #000000;")
 
     def toggle_theme(self):
-        self.dark_theme = not self.dark_theme
-        self.set_theme()
-        self.set_theme_button_text()
+        reply = QMessageBox.question(self, "Confirm Theme Change",
+                                     "Are you sure you want to switch to the {} theme?".format("light" if self.dark_theme else "dark"),
+                                     QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.dark_theme = not self.dark_theme
+            self.set_theme()
+            self.set_theme_button_text()
 
     def set_theme_button_text(self):
         if self.dark_theme:
@@ -140,9 +144,15 @@ class SettingsWindow(QDialog):
 
         form_layout = QFormLayout()
         self.theme_button = QPushButton()
+        self.theme_button.clicked.connect(self.toggle_theme)
         form_layout.addRow("Theme:", self.theme_button)
 
         layout.addLayout(form_layout)
+
+    def toggle_theme(self):
+        self.theme_button.setEnabled(False)
+        self.theme_button.setText("Switching theme...")
+        self.accept()
 
 
 if __name__ == "__main__":
