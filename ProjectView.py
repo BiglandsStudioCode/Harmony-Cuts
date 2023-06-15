@@ -1,7 +1,8 @@
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QListWidget, QRadioButton, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QListWidget, QRadioButton, QMessageBox, QInputDialog, QDialog, QFormLayout
 from PyQt5.QtCore import Qt
+
 
 class ProjectView(QMainWindow):
     def __init__(self):
@@ -26,17 +27,17 @@ class ProjectView(QMainWindow):
         create_button = QPushButton("Create Project", self)
         open_button = QPushButton("Open Project", self)
         delete_button = QPushButton("Delete Project", self)
-        theme_button = QPushButton("Toggle Theme", self)
+        settings_button = QPushButton("Settings", self)
         button_layout.addWidget(create_button)
         button_layout.addWidget(open_button)
         button_layout.addWidget(delete_button)
-        button_layout.addWidget(theme_button)
+        button_layout.addWidget(settings_button)
 
         # Connect button signals to slots
         create_button.clicked.connect(self.create_project)
         open_button.clicked.connect(self.open_project)
         delete_button.clicked.connect(self.delete_project)
-        theme_button.clicked.connect(self.toggle_theme)
+        settings_button.clicked.connect(self.open_settings)
 
         # Add layouts to main layout
         main_layout.addLayout(project_layout)
@@ -92,7 +93,7 @@ class ProjectView(QMainWindow):
             with open(theme_file, "r") as file:
                 theme = file.read().strip()
                 return theme.lower() == "dark"
-        return False
+        return True
 
     def set_theme(self):
         if self.dark_theme:
@@ -101,23 +102,20 @@ class ProjectView(QMainWindow):
             self.setStyleSheet("background-color: #ffffff; color: #000000;")
 
     def toggle_theme(self):
-        reply = QMessageBox.question(self, "Change Theme", "You need to restart the application to apply the new theme. Restart now?",
-                                     QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            self.set_dark_theme(not self.dark_theme)
-            self.restart_application()
+        self.dark_theme = not self.dark_theme
+        self.set_theme()
+        self.set_theme_button_text()
 
-    def set_dark_theme(self, dark_theme):
-        theme_file = os.path.join("settings", "theme.txt")
-        with open(theme_file, "w") as file:
-            if dark_theme:
-                file.write("dark")
-            else:
-                file.write("light")
+    def set_theme_button_text(self):
+        if self.dark_theme:
+            self.settings_window.theme_button.setText("Turn on Light Theme")
+        else:
+            self.settings_window.theme_button.setText("Turn on Dark Theme")
 
-    def restart_application(self):
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+    def open_settings(self):
+        self.settings_window = SettingsWindow(self.dark_theme)
+        self.settings_window.theme_button.clicked.connect(self.toggle_theme)
+        self.settings_window.exec_()
 
     def closeEvent(self, event):
         event.ignore()
@@ -127,6 +125,25 @@ class ProjectView(QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
+class SettingsWindow(QDialog):
+    def __init__(self, dark_theme):
+        super().__init__()
+        self.setWindowTitle("Settings")
+        self.setWindowModality(Qt.ApplicationModal)
+        self.resize(300, 200)
+
+        self.dark_theme = dark_theme
+
+        layout = QVBoxLayout(self)
+
+        form_layout = QFormLayout()
+        self.theme_button = QPushButton()
+        form_layout.addRow("Theme:", self.theme_button)
+
+        layout.addLayout(form_layout)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
